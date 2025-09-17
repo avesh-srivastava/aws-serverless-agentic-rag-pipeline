@@ -1,0 +1,267 @@
+{
+  "Comment": "Complete RAG Pipeline with Advanced Retrieval and Monitoring",
+  "StartAt": "ReadConversationHistory",
+  "States": {
+    "ReadConversationHistory": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "aai_read_history",
+        "Payload": {
+          "session_id.$": "$.session_id",
+          "limit.$": "$.max_results"
+        }
+      },
+      "ResultPath": "$.conversationHistory",
+      "Next": "GetQueryEmbedding"
+    },
+    "GetQueryEmbedding": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "aai_query_embedding",
+        "Payload": {
+          "user_query.$": "$.user_query"
+        }
+      },
+      "ResultPath": "$.queryEmbedding",
+      "Next": "SearchAndFusion"
+    },
+    "SearchAndFusion": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "aai_hybrid_search_fusion",
+        "Payload": {
+          "query_id.$": "$.query_id",
+          "user_query.$": "$.user_query",
+          "queryEmbedding.$": "$.queryEmbedding.Payload.embedding",
+          "max_results.$": "$.max_results",
+          "product_filter.$": "$.product_filter"
+        }
+      },
+      "ResultPath": "$.searchResult",
+      "Next": "CheckSearchSuccess",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "SearchFailed",
+          "ResultPath": "$.error"
+        }
+      ]
+    },
+    "CheckSearchSuccess": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.searchResult.Payload.statusCode",
+          "NumericEquals": 200,
+          "Next": "CrossEncoderRerank"
+        }
+      ],
+      "Default": "SearchFailed"
+    },
+    "CrossEncoderRerank": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "aai_cross_encoder_rerank",
+        "Payload": {
+          "query_id.$": "$.query_id",
+          "candidates_s3_key.$": "$.searchResult.Payload.candidates_s3_key",
+          "user_query.$": "$.user_query",
+          "use_reranker.$": "$.use_reranker"
+        }
+      },
+      "ResultPath": "$.rerankResult",
+      "Next": "CheckRerankSuccess",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "RerankFailed",
+          "ResultPath": "$.error"
+        }
+      ]
+    },
+    "CheckRerankSuccess": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.rerankResult.Payload.statusCode",
+          "NumericEquals": 200,
+          "Next": "MMRDiversify"
+        }
+      ],
+      "Default": "RerankFailed"
+    },
+    "MMRDiversify": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "aai_mmr_diversity",
+        "Payload": {
+          "query_id.$": "$.query_id",
+          "candidates_s3_key.$": "$.rerankResult.Payload.candidates_s3_key",
+          "queryEmbedding.$": "$.queryEmbedding.Payload.embedding",
+          "use_mmr.$": "$.use_mmr",
+          "mmr_lambda.$": "$.mmr_lambda",
+          "max_results.$": "$.max_results"
+        }
+      },
+      "ResultPath": "$.mmrResult",
+      "Next": "CheckMMRSuccess",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "MMRFailed",
+          "ResultPath": "$.error"
+        }
+      ]
+    },
+    "CheckMMRSuccess": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.mmrResult.Payload.statusCode",
+          "NumericEquals": 200,
+          "Next": "FinalResults"
+        }
+      ],
+      "Default": "MMRFailed"
+    },
+    "FinalResults": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "aai_final_results",
+        "Payload": {
+          "query_id.$": "$.query_id",
+          "candidates_s3_key.$": "$.mmrResult.Payload.candidates_s3_key",
+          "user_query.$": "$.user_query",
+          "max_results.$": "$.max_results",
+          "use_reranker.$": "$.use_reranker",
+          "use_mmr.$": "$.use_mmr",
+          "all_monitoring.$": "States.Array($.searchResult.Payload.monitoring, $.rerankResult.Payload.monitoring, $.mmrResult.Payload.monitoring)"
+        }
+      },
+      "ResultPath": "$.retrievalResults",
+      "Next": "SynthesizeAnswer"
+    },
+    "SearchFailed": {
+      "Type": "Pass",
+      "Parameters": {
+        "statusCode": 500,
+        "error": "Search and fusion stage failed",
+        "stage": "search_fusion",
+        "details.$": "$.error"
+      },
+      "End": true
+    },
+    "RerankFailed": {
+      "Type": "Pass",
+      "Comment": "Continue with original candidates if reranking fails",
+      "Parameters": {
+        "query_id.$": "$.query_id",
+        "candidates_s3_key.$": "$.searchResult.Payload.candidates_s3_key",
+        "queryEmbedding.$": "$.queryEmbedding",
+        "use_mmr.$": "$.use_mmr",
+        "mmr_lambda.$": "$.mmr_lambda",
+        "max_results.$": "$.max_results"
+      },
+      "Next": "MMRDiversify"
+    },
+    "MMRFailed": {
+      "Type": "Pass",
+      "Comment": "Continue with reranked candidates if MMR fails",
+      "Parameters": {
+        "query_id.$": "$.query_id",
+        "candidates_s3_key.$": "$.rerankResult.Payload.candidates_s3_key",
+        "user_query.$": "$.user_query",
+        "max_results.$": "$.max_results",
+        "use_reranker.$": "$.use_reranker",
+        "use_mmr": false,
+        "all_monitoring.$": "States.Array($.searchResult.Payload.monitoring, $.rerankResult.Payload.monitoring)"
+      },
+      "Next": "FinalResults"
+    },
+    "SynthesizeAnswer": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "aai_synthesize_answer",
+        "Payload": {
+          "user_query.$": "$.user_query",
+          "chunks.$": "$.retrievalResults.Payload.chunks",
+          "metadata.$": "$.retrievalResults.Payload.metadata",
+          "conversationHistory.$": "$.conversationHistory.Payload.history",
+          "query_id.$": "$.query_id",
+          "session_id.$": "$.session_id"
+        }
+      },
+      "ResultPath": "$.synthesizedAnswer",
+      "Next": "CheckTicketIntent"
+    },
+    "CheckTicketIntent": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.synthesizedAnswer.Payload.create_ticket",
+          "BooleanEquals": true,
+          "Next": "CreateTicket"
+        }
+      ],
+      "Default": "StoreConversation"
+    },
+    "CreateTicket": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "aai_create_ticket",
+        "Payload": {
+          "session_id.$": "$.session_id",
+          "user_query.$": "$.user_query",
+          "agent_response.$": "$.synthesizedAnswer.Payload.answer",
+          "query_id.$": "$.query_id"
+        }
+      },
+      "ResultPath": "$.ticketCreated",
+      "Next": "StoreConversation"
+    },
+    "StoreConversation": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "aai_store_conversation",
+        "Payload": {
+          "query_id.$": "$.query_id",
+          "user_query.$": "$.user_query",
+          "answer.$": "$.synthesizedAnswer.Payload.answer",
+          "sources.$": "$.retrievalResults.Payload.metadata",
+          "session_id.$": "$.session_id"
+        }
+      },
+      "ResultPath": "$.conversationStored",
+      "Next": "FinalResponse"
+    },
+    "FinalResponse": {
+      "Type": "Pass",
+      "Parameters": {
+        "statusCode": 200,
+        "answer.$": "$.synthesizedAnswer.Payload.answer",
+        "sources.$": "$.retrievalResults.Payload.metadata",
+        "query_id.$": "$.query_id",
+        "monitoring": {
+          "retrieval_monitoring.$": "$.retrievalResults.Payload.monitoring",
+          "quality_s3_location.$": "$.retrievalResults.Payload.quality_s3_location"
+        }
+      },
+      "End": true
+    }
+  }
+}

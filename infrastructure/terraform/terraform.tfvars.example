@@ -1,0 +1,76 @@
+# Terraform Variables Example
+# Copy this file to terraform.tfvars and customize for your environment
+
+# Environment Configuration
+environment = "dev"
+aws_region  = "us-east-1"
+
+# OpenSearch Configuration
+domain_name                = "agentic-rag-knowledge-base"
+opensearch_instance_type   = "t3.small.search"
+opensearch_instance_count  = 1
+opensearch_volume_size     = 20
+
+# Lambda Configuration
+lambda_timeout     = 300
+lambda_memory_size = 512
+
+# Application Configuration
+ttl_days      = 7
+support_email = "support@yourcompany.com"
+
+# Common Tags
+common_tags = {
+  Project     = "AgenticRAG"
+  Environment = "dev"
+  ManagedBy   = "Terraform"
+  Application = "AI-Customer-Support"
+  Owner       = "YourTeam"
+}
+
+# Agent-Specific Configuration
+agent_configs = {
+  ingestion = {
+    memory_size = 1024
+    timeout     = 900
+    environment_vars = {
+      TEXTRACT_TIMEOUT = "300"
+      CHUNK_SIZE       = "1000"
+      BATCH_SIZE       = "10"
+    }
+  }
+  retrieval = {
+    memory_size = 512
+    timeout     = 300
+    environment_vars = {
+      MAX_RESULTS      = "50"
+      SEARCH_TIMEOUT   = "30"
+      RRF_K            = "60"
+    }
+  }
+  conversation = {
+    memory_size = 512
+    timeout     = 300
+    environment_vars = {
+      LLM_MODEL        = "amazon.titan-text-lite-v1"
+      MAX_HISTORY      = "10"
+      PROMPT_MAX_CHARS = "3500"
+    }
+  }
+  escalation = {
+    memory_size = 256
+    timeout     = 60
+    environment_vars = {
+      TICKET_PRIORITY  = "MEDIUM"
+      EMAIL_TEMPLATE   = "default"
+    }
+  }
+  orchestration = {
+    memory_size = 256
+    timeout     = 60
+    environment_vars = {
+      API_TIMEOUT      = "30"
+      MAX_RETRIES      = "3"
+    }
+  }
+}

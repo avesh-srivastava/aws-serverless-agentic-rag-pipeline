@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agentic AI Chatbot</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    #chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      max-width: 600px;
+      margin: auto;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    #chat-log {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+    }
+    .message {
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+    .user {
+      text-align: right;
+      color: #0078d4;
+    }
+    .bot {
+      text-align: left;
+      color: #333;
+    }
+    #chat-input {
+      display: flex;
+      border-top: 1px solid #ccc;
+    }
+    #chat-input input {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      font-size: 16px;
+    }
+    #chat-input button {
+      padding: 12px 16px;
+      background: #0078d4;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    #chat-input button:hover {
+      background: #005fa3;
+    }
+  </style>
+</head>
+<body>
+  <div id="chat-container">
+    <div id="chat-log"></div>
+    <div id="chat-input">
+      <input type="text" id="user-input" placeholder="Type your message..." />
+      <button onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+
+  <script>
+    const chatLog = document.getElementById("chat-log");
+    const userInput = document.getElementById("user-input");
+
+    function appendMessage(text, sender) {
+      const msg = document.createElement("div");
+      msg.className = `message ${sender}`;
+      msg.textContent = text;
+      chatLog.appendChild(msg);
+      chatLog.scrollTop = chatLog.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const message = userInput.value.trim();
+      if (!message) return;
+
+      appendMessage(message, "user");
+      userInput.value = "";
+
+      try {
+        const response = await fetch("https://your-agentic-ai.com/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message })
+        });
+        const data = await response.json();
+        appendMessage(data.reply || "No response received.", "bot");
+      } catch (error) {
+        appendMessage("Error communicating with Agentic AI.", "bot");
+        console.error(error);
+      }
+    }
+
+    userInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") sendMessage();
+    });
+  </script>
+</body>
+</html>

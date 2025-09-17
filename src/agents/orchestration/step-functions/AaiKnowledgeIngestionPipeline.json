@@ -1,0 +1,148 @@
+{
+  "Comment": "Knowledge Ingestion Pipeline",
+  "StartAt": "DetermineFileType",
+  "States": {
+    "DetermineFileType": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.fileExtension",
+          "StringEquals": ".pdf",
+          "Next": "StartTextract"
+        },
+        {
+          "Variable": "$.fileExtension",
+          "StringEquals": ".csv",
+          "Next": "PreprocessCSV"
+        }
+      ],
+      "Default": "UnsupportedFile"
+    },
+    "StartTextract": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "aai_start_textract",
+        "Payload.$": "$"
+      },
+      "Next": "WaitForTextract"
+    },
+    "WaitForTextract": {
+      "Type": "Wait",
+      "Seconds": 30,
+      "Next": "CheckTextractStatus"
+    },
+    "CheckTextractStatus": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "aai_check_textract_status",
+        "Payload.$": "$"
+      },
+      "Next": "PrintTextractStatus"
+    },
+    "PrintTextractStatus": {
+      "Type": "Pass",
+      "Comment": "Logging Textract status before decision",
+      "Parameters": {
+        "textractStatus.$": "$.Payload.textractStatus"
+      },
+      "ResultPath": "$.textractStatusInfo",
+      "Next": "TextractComplete?"
+    },
+    "TextractComplete?": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.textractStatusInfo.textractStatus",
+          "StringEquals": "SUCCEEDED",
+          "Next": "ChunkText"
+        },
+        {
+          "Or": [
+            {
+              "Variable": "$.textractStatusInfo.textractStatus",
+              "StringEquals": "IN_PROGRESS"
+            },
+            {
+              "Variable": "$.textractStatusInfo.textractStatus",
+              "StringEquals": "RUNNING"
+            }
+          ],
+          "Next": "WaitForTextract"
+        }
+      ],
+      "Default": "WaitForTextract"
+    },
+    "ChunkText": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "aai_chunk_text",
+        "Payload": {
+          "bucket.$": "$.Payload.bucket",
+          "textKey.$": "$.Payload.textKey"
+        }
+      },
+      "ResultPath": "$.processResult",
+      "Next": "GenerateEmbeddings"
+    },
+    "PreprocessCSV": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "aai_preprocess_csv",
+        "Payload": {
+          "bucket.$": "$.bucket",
+          "key.$": "$.key"
+        }
+      },
+      "ResultPath": "$.processResult",
+      "Next": "GenerateEmbeddings"
+    },
+    "GenerateEmbeddings": {
+      "Type": "Map",
+      "ItemsPath": "$.processResult.Payload.chunkBatches",
+      "MaxConcurrency": 1,
+      "Iterator": {
+        "StartAt": "EmbedBatch",
+        "States": {
+          "EmbedBatch": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+              "FunctionName": "aai_generate_embeddings",
+              "Payload": {
+                "bucket.$": "$$.Execution.Input.bucket",
+                "chunkKeys.$": "$",
+                "batchId.$": "$$.State.EnteredTime",
+                "filename.$": "$$.Execution.Input.key"
+              }
+            },
+            "OutputPath": "$.Payload",
+            "End": true
+          }
+        }
+      },
+      "ResultPath": "$.embeddingResults",
+      "Next": "StoreEmbeddings"
+    },
+    "StoreEmbeddings": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "aai_store_opensearch",
+        "Payload": {
+          "bucket.$": "$$.Execution.Input.bucket",
+          "embeddingKeys.$": "$.embeddingResults[*].embeddingsKey"
+        }
+      },
+      "End": true
+    },
+    "UnsupportedFile": {
+      "Type": "Fail",
+      "Error": "UnsupportedFileType",
+      "Cause": "Only PDF files are supported."
+    }
+  }
+}
