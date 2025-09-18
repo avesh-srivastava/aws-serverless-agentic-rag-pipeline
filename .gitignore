@@ -162,6 +162,9 @@ deployment/terraform-outputs-*.json
 *.zip
 *.tar.gz
 
+# Allow sample data
+!sample-data/
+
 # Lambda deployment packages
 lambda-packages/
 layers/

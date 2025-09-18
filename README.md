@@ -87,6 +87,12 @@ aws-serverless-agentic-rag-pipeline/
 │   ├── scripts/                   # Deployment scripts
 │   └── configs/                   # Environment configurations
 ├── monitoring/                    # Monitoring and observability
+├── notebooks/                     # Jupyter notebooks for data analysis
+├── sample-data/                   # Sample data for testing
+│   ├── business-documents/        # Business and process documents
+│   ├── products/                  # Product specifications
+│   ├── faqs/                      # Customer support FAQs
+│   └── support-tickets/           # Kaggle support ticket dataset
 └── examples/                      # Sample requests and notebooks
 ```
 
