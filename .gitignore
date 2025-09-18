@@ -186,12 +186,9 @@ opensearch-data/
 local.env
 .local/
 
-# Architecture diagrams
-*.png
-!architecture/diagrams/*.png
-
-# Jupyter notebook outputs
+# Jupyter notebook outputs (allow notebooks in notebooks/ directory)
 *.ipynb
+!notebooks/*.ipynb
 
 # Performance analysis outputs
 performance_*.json
