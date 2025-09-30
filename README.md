@@ -60,7 +60,7 @@ vim infrastructure/terraform/terraform.tfvars
 ### 3. Deploy Infrastructure
 ```bash
 # Deploy with Terraform
-./infrastructure/scripts/terraform_deploy.sh dev us-east-1 apply
+./infrastructure/scripts/terraform_deploy.sh dev ap-south-1 apply
 ```
 
 ### 4. Deploy Step Functions
@@ -140,7 +140,7 @@ Key configuration options available in `infrastructure/configs/`:
 ```bash
 # Core Configuration
 ENVIRONMENT=dev
-AWS_REGION=us-east-1
+AWS_REGION=ap-south-1
 AWS_ACCOUNT_ID=your-account-id
 LLM_MODEL=amazon.titan-text-lite-v1
 

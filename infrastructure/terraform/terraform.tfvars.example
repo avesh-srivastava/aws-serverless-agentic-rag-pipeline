@@ -3,7 +3,7 @@
 
 # Environment Configuration
 environment = "dev"
-aws_region  = "us-east-1"
+aws_region  = "ap-south-1"
 
 # OpenSearch Configuration
 opensearch_domain          = "agentic-rag-knowledge-base"

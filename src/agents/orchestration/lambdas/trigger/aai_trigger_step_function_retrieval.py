@@ -7,7 +7,7 @@ from datetime import datetime
 
 
 sfn = boto3.client("stepfunctions")
-STATE_MACHINE_ARN = os.environ.get("STEP_FUNCTION_ARN", f"arn:aws:states:{os.environ.get('AWS_REGION', 'us-east-1')}:{os.environ.get('AWS_ACCOUNT_ID')}:stateMachine:AaiKnowledgeRetrievalRagPipeline-{os.environ.get('ENVIRONMENT', 'dev')}")
+STATE_MACHINE_ARN = os.environ.get("STEP_FUNCTION_ARN", f"arn:aws:states:{os.environ.get('AWS_REGION', 'ap-south-1')}:{os.environ.get('AWS_ACCOUNT_ID')}:stateMachine:AaiKnowledgeRetrievalRagPipeline-{os.environ.get('ENVIRONMENT', 'dev')}")
 
 
 def _extract_session_id(event_body, headers):

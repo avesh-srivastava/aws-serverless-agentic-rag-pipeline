@@ -6,7 +6,7 @@
 set -e
 
 ENVIRONMENT=${1:-dev}
-REGION=${2:-us-east-1}
+REGION=${2:-ap-south-1}
 
 echo "🤖 Deploying Lambda Functions - Environment: $ENVIRONMENT"
 
