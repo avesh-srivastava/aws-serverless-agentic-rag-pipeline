@@ -1,10 +1,11 @@
 import boto3
 from opensearchpy import OpenSearch, RequestsHttpConnection
 from requests_aws4auth import AWS4Auth
+import os
 
 def enable_knn():
-    host = 'search-customer-support-search-w3mis3dcb66vl4ojauchjsffj4.us-east-1.es.amazonaws.com'
-    region = 'us-east-1'
+    host = os.environ.get("OPENSEARCH_DOMAIN")
+    region = os.environ.get("AWS_REGION")
     service = 'es'
     
     credentials = boto3.Session().get_credentials()

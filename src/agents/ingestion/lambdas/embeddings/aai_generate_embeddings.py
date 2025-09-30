@@ -4,7 +4,9 @@ import os
 import time
 from botocore.exceptions import ClientError
 
-bedrock = boto3.client('bedrock-runtime', region_name='us-east-1')
+region = os.environ.get("AWS_REGION")
+
+bedrock = boto3.client('bedrock-runtime', region_name=region)
 s3 = boto3.client("s3")
 
 def get_embedding(text):

@@ -8,6 +8,7 @@ from datetime import datetime
 from opensearchpy import OpenSearch, RequestsHttpConnection
 from requests_aws4auth import AWS4Auth
 from collections import defaultdict
+import os
 
 s3 = boto3.client('s3')
 BUCKET_NAME = 'support-agent-search-results'
@@ -43,16 +44,18 @@ def rrf_fusion(bm25_results, knn_results, k=60):
 def lambda_handler(event, context):
     start_time = time.time()
     cloudwatch = boto3.client('cloudwatch')
-    s3 = boto3.client('s3')
+    host = os.environ.get("OPENSEARCH_DOMAIN")
+    index_name = os.environ.get("OPENSEARCH_INDEX")
+    region = os.environ.get("AWS_REGION")
+    service = 'es'
     
     query_id = event.get('query_id', f"query_{int(time.time())}")
     
     try:
         # OpenSearch setup
-        host = 'search-customer-support-search-w3mis3dcb66vl4ojauchjsffj4.us-east-1.es.amazonaws.com'
         credentials = boto3.Session().get_credentials()
         awsauth = AWS4Auth(credentials.access_key, credentials.secret_key, 
-                           'us-east-1', 'es', session_token=credentials.token)
+                           region, service, session_token=credentials.token)
         
         opensearch = OpenSearch(
             hosts=[{'host': host, 'port': 443}],
@@ -101,11 +104,11 @@ def lambda_handler(event, context):
         
         # Execute searches
         bm25_start = time.time()
-        bm25_resp = opensearch.search(index="support-agent-knowledge", body=bm25_query)
+        bm25_resp = opensearch.search(index=index_name, body=bm25_query)
         bm25_time = (time.time() - bm25_start) * 1000
         
         knn_start = time.time()
-        knn_resp = opensearch.search(index="support-agent-knowledge", body=knn_query)
+        knn_resp = opensearch.search(index=index_name, body=knn_query)
         knn_time = (time.time() - knn_start) * 1000
         
         # RRF Fusion

@@ -1,3 +1,5 @@
+# Defines variable declarations (what variables exist and their types)
+
 variable "environment" {
   description = "Environment name (dev, staging, prod)"
   type        = string
@@ -15,10 +17,52 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
-variable "domain_name" {
+variable "opensearch_domain" {
   description = "OpenSearch domain name"
   type        = string
   default     = "agentic-rag-knowledge-base"
+}
+
+variable "opensearch_index" {
+  description = "OpenSearch index name"
+  type        = string
+  default     = "support-agent-knowledge"
+}
+
+variable "conversation_table_name" {
+  description = "DynamoDB conversation table name"
+  type        = string
+  default     = "AaiConversationHistory-dev"
+}
+
+variable "support_tickets_table_name" {
+  description = "DynamoDB support tickets table name"
+  type        = string
+  default     = "AaiSupportTickets-dev"
+}
+
+variable "hf_model_id" {
+  description = "HuggingFace model ID for cross-encoder"
+  type        = string
+  default     = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+}
+
+variable "hf_task" {
+  description = "HuggingFace task type"
+  type        = string
+  default     = "text-classification"
+}
+
+variable "llm_model" {
+  description = "Bedrock LLM model ID"
+  type        = string
+  default     = "amazon.titan-text-lite-v1"
+}
+
+variable "embed_model" {
+  description = "Bedrock embedding model ID"
+  type        = string
+  default     = "amazon.titan-embed-text-v1"
 }
 
 variable "opensearch_instance_type" {
@@ -36,7 +80,7 @@ variable "opensearch_instance_count" {
 variable "opensearch_volume_size" {
   description = "OpenSearch EBS volume size in GB"
   type        = number
-  default     = 20
+  default     = 10
 }
 
 variable "lambda_timeout" {
@@ -87,39 +131,34 @@ variable "agent_configs" {
       memory_size = 1024
       timeout     = 900
       environment_vars = {
-        TEXTRACT_TIMEOUT = "300"
-        CHUNK_SIZE       = "1000"
+        CHUNK_BATCH_SIZE = "20"
+        OUTPUT_PREFIX    = "processed/chunks/logs/"
+        CHUNK_CHAR_SIZE  = "1200"
+        CHUNK_OVERLAP    = "200"
       }
     }
     retrieval = {
       memory_size = 512
       timeout     = 300
-      environment_vars = {
-        MAX_RESULTS      = "50"
-        SEARCH_TIMEOUT   = "30"
-      }
+      environment_vars = {}
     }
     conversation = {
       memory_size = 512
       timeout     = 300
       environment_vars = {
-        LLM_MODEL        = "amazon.titan-text-lite-v1"
-        MAX_HISTORY      = "10"
+        PROMPT_MAX_CHARS = "3500"
+        MAX_TURNS        = "5"
       }
     }
     escalation = {
       memory_size = 256
       timeout     = 60
-      environment_vars = {
-        TICKET_PRIORITY  = "MEDIUM"
-      }
+      environment_vars = {}
     }
     orchestration = {
       memory_size = 256
       timeout     = 60
-      environment_vars = {
-        API_TIMEOUT      = "30"
-      }
+      environment_vars = {}
     }
   }
 }

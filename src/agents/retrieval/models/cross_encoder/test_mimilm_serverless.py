@@ -1,11 +1,15 @@
 from sagemaker.huggingface.model import HuggingFacePredictor
 import boto3
 import sagemaker
+import os
 
 # 1. Configure region and session
-session = boto3.Session(region_name='us-east-1')
+region = os.environ.get("AWS_REGION")
+
+session = boto3.Session(region_name=region)
 sagemaker_session = sagemaker.Session(boto_session=session)
 
+#replace your model name here 
 predictor = HuggingFacePredictor("minilm-reranker-1756624753", sagemaker_session=sagemaker_session)
 
 query = "What is the capital of France?"

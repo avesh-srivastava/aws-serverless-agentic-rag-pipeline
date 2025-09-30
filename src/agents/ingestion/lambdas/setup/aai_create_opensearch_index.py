@@ -1,13 +1,14 @@
 import boto3
 from opensearchpy import OpenSearch, RequestsHttpConnection
 from requests_aws4auth import AWS4Auth
+import os
 
 def lambda_handler(event, context):
     # OpenSearch domain endpoint - replace with your actual endpoint
-    host = 'search-customer-support-search-w3mis3dcb66vl4ojauchjsffj4.us-east-1.es.amazonaws.com'
-    region = 'us-east-1'  # replace with your region
+    host = os.environ.get("OPENSEARCH_DOMAIN")
+    index_name = os.environ.get("OPENSEARCH_INDEX")
+    region = os.environ.get("AWS_REGION")
     service = 'es'
-    index_name = "support-agent-knowledge"
     
     # Get credentials from the AWS SDK
     credentials = boto3.Session().get_credentials()

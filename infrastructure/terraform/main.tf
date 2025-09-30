@@ -18,12 +18,14 @@ data "aws_region" "current" {}
 
 # OpenSearch Domain
 resource "aws_opensearch_domain" "agentic_rag" {
-  domain_name    = "${var.domain_name}-${var.environment}"
-  engine_version = "OpenSearch_2.3"
+  domain_name    = "${var.opensearch_domain}-${var.environment}"
+  engine_version = "OpenSearch_3.1"
 
   cluster_config {
-    instance_type  = var.opensearch_instance_type
-    instance_count = var.opensearch_instance_count
+    instance_type            = var.opensearch_instance_type
+    instance_count           = var.opensearch_instance_count
+    availability_zone_count  = 1
+    zone_awareness_enabled   = false
   }
 
   ebs_options {
@@ -33,7 +35,8 @@ resource "aws_opensearch_domain" "agentic_rag" {
   }
 
   domain_endpoint_options {
-    enforce_https = true
+    enforce_https       = true
+    tls_security_policy = "Policy-Min-TLS-1-2-2019-07"
   }
 
   node_to_node_encryption {
@@ -45,7 +48,12 @@ resource "aws_opensearch_domain" "agentic_rag" {
   }
 
   advanced_security_options {
-    enabled = false
+    enabled                        = true
+    anonymous_auth_enabled         = false
+    internal_user_database_enabled = false
+    master_user_options {
+      master_user_arn = aws_iam_role.lambda_role.arn
+    }
   }
 
   access_policies = jsonencode({
@@ -54,10 +62,10 @@ resource "aws_opensearch_domain" "agentic_rag" {
       {
         Effect = "Allow"
         Principal = {
-          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+          AWS = aws_iam_role.lambda_role.arn
         }
         Action   = "es:*"
-        Resource = "arn:aws:es:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:domain/${var.domain_name}-${var.environment}/*"
+        Resource = "arn:aws:es:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:domain/${var.opensearch_domain}-${var.environment}/*"
       }
     ]
   })
@@ -134,6 +142,11 @@ resource "aws_s3_bucket" "search_results" {
   tags   = var.common_tags
 }
 
+resource "aws_s3_bucket" "raw_data" {
+  bucket = "support-agent-data-${var.environment}"
+  tags   = var.common_tags
+}
+
 resource "aws_s3_bucket_versioning" "search_results" {
   bucket = aws_s3_bucket.search_results.id
   versioning_configuration {
@@ -186,36 +199,26 @@ resource "aws_iam_role_policy" "lambda_permissions" {
       {
         Effect = "Allow"
         Action = [
-          "dynamodb:GetItem",
-          "dynamodb:PutItem",
-          "dynamodb:Query",
-          "dynamodb:Scan",
-          "dynamodb:UpdateItem"
-        ]
-        Resource = [
-          aws_dynamodb_table.conversation_history.arn,
-          aws_dynamodb_table.support_tickets.arn,
-          "${aws_dynamodb_table.support_tickets.arn}/index/*"
-        ]
-      },
-      {
-        Effect = "Allow"
-        Action = [
           "s3:GetObject",
           "s3:PutObject",
-          "s3:DeleteObject"
+          "s3:ListBucket"
         ]
-        Resource = "${aws_s3_bucket.search_results.arn}/*"
+        Resource = [
+          "${aws_s3_bucket.search_results.arn}/*",
+          aws_s3_bucket.search_results.arn,
+          "arn:aws:s3:::support-agent-data-${var.environment}/*",
+          "arn:aws:s3:::support-agent-data-${var.environment}"
+        ]
       },
       {
         Effect = "Allow"
         Action = [
-          "es:ESHttpGet",
-          "es:ESHttpPost",
-          "es:ESHttpPut",
-          "es:ESHttpDelete"
+          "textract:StartDocumentTextDetection",
+          "textract:GetDocumentTextDetection",
+          "textract:StartDocumentAnalysis",
+          "textract:GetDocumentAnalysis"
         ]
-        Resource = "${aws_opensearch_domain.agentic_rag.arn}/*"
+        Resource = "*"
       },
       {
         Effect = "Allow"
@@ -227,16 +230,65 @@ resource "aws_iam_role_policy" "lambda_permissions" {
       {
         Effect = "Allow"
         Action = [
-          "sagemaker:InvokeEndpoint"
+          "es:ESHttpGet",
+          "es:ESHttpPut",
+          "es:ESHttpPost",
+          "es:DescribeDomain"
         ]
+        Resource = "${aws_opensearch_domain.agentic_rag.arn}/*"
+      },
+      {
+        Effect = "Allow"
+        Action = "logs:*",
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = "cloudwatch:PutMetricData",
         Resource = "*"
       },
       {
         Effect = "Allow"
         Action = [
-          "textract:StartDocumentTextDetection",
-          "textract:GetDocumentTextDetection"
+          "dynamodb:Query",
+          "dynamodb:PutItem",
+          "dynamodb:GetItem",
+          "dynamodb:UpdateItem"
         ]
+        Resource = [
+          aws_dynamodb_table.conversation_history.arn,
+          aws_dynamodb_table.support_tickets.arn,
+          "${aws_dynamodb_table.support_tickets.arn}/index/*"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "states:StartSyncExecution"
+        ]
+        Resource = "arn:aws:states:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:stateMachine:*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "sagemaker:InvokeEndpoint"
+        ]
+        Resource = [
+          "arn:aws:sagemaker:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:endpoint/*"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage",
+          "ecr:BatchCheckLayerAvailability"
+        ]
+        Resource = "arn:aws:ecr:${data.aws_region.current.name}:*:repository/*"
+      },
+      {
+        Effect = "Allow"
+        Action = "ecr:GetAuthorizationToken",
         Resource = "*"
       },
       {
@@ -244,13 +296,6 @@ resource "aws_iam_role_policy" "lambda_permissions" {
         Action = [
           "ses:SendEmail",
           "ses:SendRawEmail"
-        ]
-        Resource = "*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "cloudwatch:PutMetricData"
         ]
         Resource = "*"
       }

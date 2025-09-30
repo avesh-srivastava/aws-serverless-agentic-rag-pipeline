@@ -6,7 +6,9 @@ import time
 import os
 
 # 1. Configure region and session
-session = boto3.Session(region_name='us-east-1')
+region = os.environ.get("AWS_REGION")
+
+session = boto3.Session(region_name=region)
 sagemaker_session = sagemaker.Session(boto_session=session)
 
 # 2. Get execution role
@@ -18,9 +20,12 @@ role = f"arn:aws:iam::{aws_account_id}:role/CsSageMakerExecutionRole"
 #role = os.environ.get('SAGEMAKER_ROLE_ARN', f"arn:aws:iam::{os.environ.get('AWS_ACCOUNT_ID')}:role/AgenticRag-SageMaker-Role-{os.environ.get('ENVIRONMENT', 'dev')}")
 
 # 3. Model config
+HF_MODEL_ID = os.environ.get("HF_MODEL_ID")
+HF_TASK = os.environ.get("HF_TASK")
+
 hub = {
-    'HF_MODEL_ID': 'cross-encoder/ms-marco-MiniLM-L-6-v2',
-    'HF_TASK': 'text-classification'
+    'HF_MODEL_ID': HF_MODEL_ID,
+    'HF_TASK': HF_TASK
 }
 
 # 4. Create HuggingFace model object

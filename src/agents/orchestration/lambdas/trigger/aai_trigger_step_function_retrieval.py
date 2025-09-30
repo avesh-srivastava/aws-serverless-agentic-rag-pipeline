@@ -5,6 +5,7 @@ import json, os, uuid, time
 import boto3
 from datetime import datetime
 
+
 sfn = boto3.client("stepfunctions")
 STATE_MACHINE_ARN = os.environ.get("STEP_FUNCTION_ARN", f"arn:aws:states:{os.environ.get('AWS_REGION', 'us-east-1')}:{os.environ.get('AWS_ACCOUNT_ID')}:stateMachine:AaiKnowledgeRetrievalRagPipeline-{os.environ.get('ENVIRONMENT', 'dev')}")
 
