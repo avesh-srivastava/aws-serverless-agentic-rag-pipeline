@@ -20,7 +20,7 @@ variable "aws_region" {
 variable "opensearch_domain" {
   description = "OpenSearch domain name"
   type        = string
-  default     = "agentic-rag-knowledge-base"
+  default     = "agentic-rag-kb"
 }
 
 variable "opensearch_index" {

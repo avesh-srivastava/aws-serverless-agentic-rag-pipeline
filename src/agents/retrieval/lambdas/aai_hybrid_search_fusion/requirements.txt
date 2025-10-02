@@ -1,0 +1,2 @@
+# boto3 and botocore are provided by AWS Lambda runtime
+# opensearch-py and requests-aws4auth are provided by layer

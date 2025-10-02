@@ -53,9 +53,21 @@ if [ "$ACTION" = "apply" ]; then
     echo -e "${BLUE}📊 Getting Terraform outputs...${NC}"
     terraform output -json > "../configs/terraform-outputs-$ENVIRONMENT.json"
     
-    echo -e "${YELLOW}🤖 Deploying Lambda functions...${NC}"
+    # Create OpenSearch layer first
+    echo -e "${YELLOW}🔧 Creating OpenSearch Lambda layer...${NC}"
     cd ../..
+    ./infrastructure/scripts/create_opensearch_layer.sh "$ENVIRONMENT" "$REGION"
+    
+    # Deploy Step Functions before Lambda functions
+    echo -e "${YELLOW}🎭 Deploying Step Functions...${NC}"
+    ./infrastructure/scripts/deploy_step_functions.sh "$ENVIRONMENT" "$REGION"
+    
+    echo -e "${YELLOW}🤖 Deploying Lambda functions...${NC}"
     ./infrastructure/scripts/deploy_lambdas_terraform.sh "$ENVIRONMENT" "$REGION"
+    
+    # Configure S3 event notifications
+    echo -e "${YELLOW}📬 Configuring S3 event notifications...${NC}"
+    ./infrastructure/scripts/configure_s3_notifications.sh "$ENVIRONMENT" "$REGION"
     
 elif [ "$ACTION" = "destroy" ]; then
     echo -e "${RED}⚠️  WARNING: This will destroy all infrastructure!${NC}"

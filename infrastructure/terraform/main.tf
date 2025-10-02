@@ -22,10 +22,9 @@ resource "aws_opensearch_domain" "agentic_rag" {
   engine_version = "OpenSearch_3.1"
 
   cluster_config {
-    instance_type            = var.opensearch_instance_type
-    instance_count           = var.opensearch_instance_count
-    availability_zone_count  = 1
-    zone_awareness_enabled   = false
+    instance_type          = var.opensearch_instance_type
+    instance_count         = var.opensearch_instance_count
+    zone_awareness_enabled = false
   }
 
   ebs_options {
@@ -145,6 +144,23 @@ resource "aws_s3_bucket" "search_results" {
 resource "aws_s3_bucket" "raw_data" {
   bucket = "support-agent-data-${var.environment}"
   tags   = var.common_tags
+}
+
+resource "aws_s3_bucket_versioning" "raw_data" {
+  bucket = aws_s3_bucket.raw_data.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "raw_data" {
+  bucket = aws_s3_bucket.raw_data.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
 }
 
 resource "aws_s3_bucket_versioning" "search_results" {
