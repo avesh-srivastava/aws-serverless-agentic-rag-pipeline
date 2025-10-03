@@ -280,6 +280,7 @@ resource "aws_iam_role_policy" "lambda_permissions" {
       {
         Effect = "Allow"
         Action = [
+          "states:StartExecution",
           "states:StartSyncExecution"
         ]
         Resource = "arn:aws:states:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:stateMachine:*"

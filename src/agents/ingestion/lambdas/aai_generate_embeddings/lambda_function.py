@@ -8,6 +8,7 @@ region = os.environ.get("AWS_REGION")
 
 bedrock = boto3.client('bedrock-runtime', region_name=region)
 s3 = boto3.client("s3")
+embed_model = os.environ.get("EMBED_MODEL")
 
 def get_embedding(text):
     max_retries = 3
@@ -17,7 +18,7 @@ def get_embedding(text):
         try:
             body = json.dumps({"inputText": text})
             resp = bedrock.invoke_model(
-                modelId="amazon.titan-embed-text-v1",
+                modelId=embed_model,
                 body=body
             )
             result = json.loads(resp['body'].read())

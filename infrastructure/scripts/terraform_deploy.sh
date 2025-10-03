@@ -53,9 +53,10 @@ if [ "$ACTION" = "apply" ]; then
     echo -e "${BLUE}📊 Getting Terraform outputs...${NC}"
     terraform output -json > "../configs/terraform-outputs-$ENVIRONMENT.json"
     
+    cd ../..
+
     # Create OpenSearch layer first
     echo -e "${YELLOW}🔧 Creating OpenSearch Lambda layer...${NC}"
-    cd ../..
     ./infrastructure/scripts/create_opensearch_layer.sh "$ENVIRONMENT" "$REGION"
     
     # Deploy Step Functions before Lambda functions

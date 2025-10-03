@@ -43,7 +43,7 @@ aws lambda add-permission \
 # Create notification configuration JSON
 NOTIFICATION_CONFIG=$(cat << EOF
 {
-    "LambdaConfigurations": [
+        "LambdaFunctionConfigurations": [
         {
             "Id": "ingestion-trigger-$ENVIRONMENT",
             "LambdaFunctionArn": "$LAMBDA_ARN",
@@ -66,15 +66,11 @@ EOF
 
 # Configure S3 bucket notification
 echo -e "${YELLOW}📬 Configuring S3 bucket notification...${NC}"
-echo "$NOTIFICATION_CONFIG" > "/tmp/s3-notification-$ENVIRONMENT.json"
 
 aws s3api put-bucket-notification-configuration \
     --bucket "$RAW_DATA_BUCKET" \
-    --notification-configuration "file:///tmp/s3-notification-$ENVIRONMENT.json" \
+    --notification-configuration "$NOTIFICATION_CONFIG" \
     --region "$REGION"
-
-# Clean up temp file
-rm -f "/tmp/s3-notification-$ENVIRONMENT.json"
 
 echo -e "${GREEN}✅ S3 event notification configured successfully!${NC}"
 echo -e "${BLUE}📋 Summary:${NC}"

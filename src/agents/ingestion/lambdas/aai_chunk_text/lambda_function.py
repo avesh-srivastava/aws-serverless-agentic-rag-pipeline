@@ -11,7 +11,7 @@ def batch_chunks(chunk_keys, batch_size=CHUNK_BATCH_SIZE):
 def lambda_handler(event, context):
     try:
         bucket = event["bucket"]
-        json_key = event["jsonKey"]
+        json_key = event["textKey"]
         layout_textract_json = s3.get_object(Bucket=bucket, Key=json_key)["Body"].read().decode("utf-8")
         textract_data = json.loads(layout_textract_json)
 
