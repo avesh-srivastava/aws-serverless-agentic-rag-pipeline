@@ -1,0 +1,106 @@
+# Production Environment Configuration
+# Production-ready configuration for high availability and performance
+
+# Environment Configuration
+environment = "prod"
+aws_region  = "ap-south-1"
+
+# OpenSearch Configuration (Production)
+opensearch_domain                = "agentic-rag-kb"
+opensearch_instance_type         = "r6g.large.search"
+opensearch_instance_count        = 3
+opensearch_volume_size           = 100
+opensearch_dedicated_master      = true
+opensearch_master_instance_type  = "r6g.medium.search"
+opensearch_master_instance_count = 3
+
+# DynamoDB Configuration
+conversation_table_name    = "AaiConversationHistory-prod"
+support_tickets_table_name = "AaiSupportTickets-prod"
+
+# Lambda Configuration (Production)
+lambda_timeout     = 60
+lambda_memory_size = 1024
+
+# Application Configuration
+ttl_days      = 30
+support_email = "support@yourcompany.com"
+
+# Common Tags
+common_tags = {
+  Project     = "AgenticRAG"
+  Environment = "prod"
+  ManagedBy   = "Terraform"
+  Application = "AI-Customer-Support"
+  Owner       = "ProductionTeam"
+  CostCenter  = "Production"
+  Backup      = "Required"
+  Monitoring  = "Critical"
+}
+
+# Model Configuration
+hf_model_id = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+hf_task     = "text-classification"
+llm_model   = "amazon.titan-text-lite-v1"
+embed_model = "amazon.titan-embed-text-v2:0"
+
+# Agent-Specific Configuration (Production)
+agent_configs = {
+  ingestion = {
+    memory_size = 3008
+    timeout     = 900
+    reserved_concurrency = 50
+    environment_vars = {
+      CHUNK_BATCH_SIZE = "50"
+      OUTPUT_PREFIX    = "processed/chunks/logs/"
+      CHUNK_CHAR_SIZE  = "1500"
+      CHUNK_OVERLAP    = "300"
+      PROCESSING_MODE  = "optimized"
+      RETRY_ATTEMPTS   = "3"
+    }
+  }
+  retrieval = {
+    memory_size = 1024
+    timeout     = 60
+    reserved_concurrency = 100
+    provisioned_concurrency = 10
+    environment_vars = {
+      SEARCH_TIMEOUT_MS     = "5000"
+      MAX_SEARCH_RESULTS    = "100"
+      RERANK_BATCH_SIZE     = "50"
+      CACHE_TTL_SECONDS     = "300"
+      PERFORMANCE_MODE      = "high"
+    }
+  }
+  conversation = {
+    memory_size = 1024
+    timeout     = 30
+    provisioned_concurrency = 20
+    environment_vars = {
+      PROMPT_MAX_CHARS      = "4000"
+      MAX_TURNS             = "10"
+      RESPONSE_TIMEOUT_MS   = "15000"
+      CONTEXT_WINDOW_SIZE   = "8000"
+      QUALITY_THRESHOLD     = "0.8"
+    }
+  }
+  escalation = {
+    memory_size = 512
+    timeout     = 120
+    environment_vars = {
+      ESCALATION_THRESHOLD  = "0.7"
+      NOTIFICATION_RETRIES  = "3"
+      PRIORITY_ROUTING      = "enabled"
+    }
+  }
+  orchestration = {
+    memory_size = 512
+    timeout     = 300
+    environment_vars = {
+      WORKFLOW_TIMEOUT_MS   = "180000"
+      PARALLEL_EXECUTION    = "enabled"
+      ERROR_RETRY_COUNT     = "3"
+      MONITORING_LEVEL      = "detailed"
+    }
+  }
+}

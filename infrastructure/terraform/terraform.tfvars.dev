@@ -1,22 +1,21 @@
-# Terraform Variables Example
-# Copy this file to terraform.tfvars and customize for your environment
+# Development Environment Configuration
+# Minimal configuration for development and testing
 
 # Environment Configuration
 environment = "dev"
 aws_region  = "ap-south-1"
 
-# OpenSearch Configuration
+# OpenSearch Configuration (Minimal for dev)
 opensearch_domain          = "agentic-rag-kb"
 opensearch_instance_type   = "t3.small.search"
 opensearch_instance_count  = 1
 opensearch_volume_size     = 20
-opensearch_index           = "support-agent-knowledge"
 
 # DynamoDB Configuration
 conversation_table_name    = "AaiConversationHistory-dev"
 support_tickets_table_name = "AaiSupportTickets-dev"
 
-# Lambda Configuration
+# Lambda Configuration (Basic)
 lambda_timeout     = 300
 lambda_memory_size = 512
 
@@ -30,7 +29,8 @@ common_tags = {
   Environment = "dev"
   ManagedBy   = "Terraform"
   Application = "AI-Customer-Support"
-  Owner       = "YourTeam"
+  Owner       = "DevTeam"
+  CostCenter  = "Development"
 }
 
 # Model Configuration
@@ -39,7 +39,7 @@ hf_task     = "text-classification"
 llm_model   = "amazon.titan-text-lite-v1"
 embed_model = "amazon.titan-embed-text-v2:0"
 
-# Agent-Specific Configuration
+# Agent-Specific Configuration (Development)
 agent_configs = {
   ingestion = {
     memory_size = 1024
@@ -55,8 +55,7 @@ agent_configs = {
     memory_size = 512
     timeout     = 300
     environment_vars = {
-      # Common variables (HF_MODEL_ID, HF_TASK, SAGEMAKER_ENDPOINT) 
-      # will be set automatically by Terraform
+      # Basic retrieval configuration
     }
   }
   conversation = {
@@ -71,14 +70,14 @@ agent_configs = {
     memory_size = 256
     timeout     = 60
     environment_vars = {
-      # Uses common DynamoDB table names and support email
+      # Basic escalation configuration
     }
   }
   orchestration = {
     memory_size = 256
     timeout     = 60
     environment_vars = {
-      # STEP_FUNCTION_ARN will be set automatically by Terraform
+      # Basic orchestration configuration
     }
   }
 }

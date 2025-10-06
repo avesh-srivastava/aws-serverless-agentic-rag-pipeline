@@ -83,6 +83,24 @@ variable "opensearch_volume_size" {
   default     = 10
 }
 
+variable "opensearch_dedicated_master" {
+  description = "Enable dedicated master nodes"
+  type        = bool
+  default     = false
+}
+
+variable "opensearch_master_instance_type" {
+  description = "OpenSearch master instance type"
+  type        = string
+  default     = "r6g.medium.search"
+}
+
+variable "opensearch_master_instance_count" {
+  description = "Number of OpenSearch master instances"
+  type        = number
+  default     = 3
+}
+
 variable "lambda_timeout" {
   description = "Lambda function timeout in seconds"
   type        = number
@@ -124,6 +142,8 @@ variable "agent_configs" {
     memory_size = number
     timeout     = number
     environment_vars = map(string)
+    reserved_concurrency = optional(number)
+    provisioned_concurrency = optional(number)
   }))
   
   default = {

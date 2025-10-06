@@ -35,9 +35,8 @@ This system implements a true **Agentic AI architecture** where specialized agen
 
 ### Prerequisites
 - AWS CLI configured with appropriate permissions
-- Terraform >= 1.0 (for infrastructure deployment)
+- Terraform >= 1.0
 - Python 3.9+
-- Node.js (for some tooling)
 
 ### 1. Clone Repository
 ```bash
@@ -45,32 +44,22 @@ git clone <repository-url>
 cd aws-serverless-agentic-rag-pipeline
 ```
 
-### 2. Configure Environment
+### 2. Choose Environment Configuration
 ```bash
-# Copy and customize Terraform variables
-cp infrastructure/terraform/terraform.tfvars.example infrastructure/terraform/terraform.tfvars
+# For Development (minimal cost)
+cp infrastructure/terraform/terraform.tfvars.dev infrastructure/terraform/terraform.tfvars
 
-# Set your AWS Account ID in environment config
-echo "AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)" >> infrastructure/configs/dev.env
-
-# Edit the file with your specific configuration
-vim infrastructure/terraform/terraform.tfvars
+# For Production (high availability)
+cp infrastructure/terraform/terraform.tfvars.prod infrastructure/terraform/terraform.tfvars
 ```
 
 ### 3. Deploy Infrastructure
 ```bash
-# Deploy with Terraform
+# Deploy complete system
 ./infrastructure/scripts/terraform_deploy.sh dev ap-south-1 apply
 ```
 
-### 4. Deploy Step Functions
-```bash
-# Deploy state machines
-aws stepfunctions create-state-machine \
-  --name "AaiKnowledgeRetrievalRagPipeline-dev" \
-  --definition file://src/agents/orchestration/step-functions/AaiKnowledgeRetrievalRagPipeline.json \
-  --role-arn $(terraform output -raw step_functions_role_arn)
-```
+📖 **For detailed deployment instructions, see [DEPLOYMENT.md](infrastructure/DEPLOYMENT.md)**
 
 ## 📁 Project Structure
 
@@ -134,70 +123,38 @@ aws-serverless-agentic-rag-pipeline/
 
 ## 🔧 Configuration
 
-### Environment Variables
-Key configuration options available in `infrastructure/configs/`:
+### Environment Options
+- **Development**: Minimal cost configuration (~$200-400/month)
+- **Production**: High availability configuration (~$800-1,200/month)
 
-```bash
-# Core Configuration
-ENVIRONMENT=dev
-AWS_REGION=ap-south-1
-AWS_ACCOUNT_ID=your-account-id
-LLM_MODEL=amazon.titan-text-lite-v1
+### Key Components
+- **17 Lambda Functions** across 5 specialized agents
+- **OpenSearch** with hybrid search capabilities
+- **SageMaker** serverless endpoint for reranking
+- **Step Functions** for workflow orchestration
+- **DynamoDB** for conversation and ticket storage
 
-# Agent-Specific Settings
-LAMBDA_TIMEOUT=300
-LAMBDA_MEMORY=512
-MAX_RESULTS=50
-```
+📖 **For complete configuration details, see [DEPLOYMENT.md](infrastructure/DEPLOYMENT.md)**
 
-### Agent-Specific Configuration
-Each agent can be configured independently through Terraform variables:
+## 📈 Performance & Monitoring
 
-```hcl
-agent_configs = {
-  ingestion = {
-    memory_size = 1024
-    timeout     = 900
-  }
-  retrieval = {
-    memory_size = 512
-    timeout     = 300
-  }
-  # ... other agents
-}
-```
-
-## 📊 Monitoring
-
-### CloudWatch Dashboards
-- Agent performance metrics
-- Quality score tracking
-- Error rate monitoring
-- User interaction patterns
-
-### Performance Analysis
-```bash
-# Run performance analysis
-python monitoring/quality_metrics/analyze_performance.py
-
-# Analyze agent logs
-python monitoring/logs/log_analysis.py
-```
-
-
-## 📈 Performance
-
-### Benchmarks
-- **Average Response Time**: < 3 seconds
-- **Search Accuracy**: 85%+ relevance scores
-- **Concurrent Users**: 100+ supported
+### Development Environment
+- **Response Time**: < 3 seconds
+- **Concurrent Users**: 100+
+- **Daily Volume**: < 5,000 documents
 - **Cost**: ~$0.10 per 1000 queries
 
-### Optimization
-- Lambda layers for heavy dependencies
-- OpenSearch index optimization
-- Cross-encoder model caching
-- Quality-based result filtering
+### Production Environment
+- **Response Time**: < 1.5 seconds
+- **Concurrent Users**: 500+
+- **Daily Volume**: < 15,000 documents
+- **Search Accuracy**: 85%+ relevance scores
+
+### Built-in Monitoring
+- CloudWatch dashboards and alarms
+- Step Functions execution tracking
+- Lambda performance metrics
+- Quality score monitoring
 
 ## 🔒 Security
 
@@ -206,6 +163,12 @@ python monitoring/logs/log_analysis.py
 - Encryption at rest and in transit
 - API Gateway throttling and authentication
 
+## 📚 Documentation
+
+- **[Deployment Guide](infrastructure/DEPLOYMENT.md)** - Complete deployment instructions
+- **[Project Overview](https://avesh-srivastava.medium.com/from-information-silos-to-intelligent-support-building-a-serverless-agentic-rag-pipeline-on-aws-594df66d8b48)** - Business case and architecture
+- **[Data Ingestion Pipeline](https://avesh-srivastava.medium.com/from-information-silos-to-intelligent-support-building-a-serverless-agentic-rag-pipeline-on-aws-81922f6a6cc3)** - Document processing workflow
+- **[Data Retrieval Pipeline](https://avesh-srivastava.medium.com/from-information-silos-to-intelligent-support-building-a-serverless-agentic-rag-pipeline-on-aws-099385907b29)** - Search and response generation
 
 ## 🙏 Acknowledgments
 
