@@ -289,13 +289,44 @@ infrastructure/
     └── terraform-outputs-dev.json   # Terraform outputs
 ```
 
+## 📝 Production Considerations
+
+### High-Volume Scenarios
+
+**Ingestion Flow Enhancement:**
+```
+S3 → SQS → Lambda (instead of S3 → Lambda direct)
+```
+- **When to use**: Concurrent file uploads >100/minute
+- **Benefits**: Prevents Lambda throttling, provides retry mechanism, better error handling
+- **Implementation**: Add SQS queue with Dead Letter Queue (DLQ) for failed processing
+- **Cost impact**: Minimal SQS charges vs. Lambda error costs
+
+**Retrieval Flow Enhancement:**
+```
+Standard Step Functions (instead of Express)
+```
+- **When to use**: Complex queries requiring >5 minutes processing
+- **Benefits**: Long-running workflows (up to 1 year), detailed execution history, better debugging
+- **Trade-off**: Higher cost but essential for complex document analysis or batch processing
+- **Use cases**: Large document sets, complex multi-step analysis, enterprise-scale queries
+
+### Scaling Recommendations
+
+| Scenario | Current Architecture | Recommended Enhancement |
+|----------|---------------------|------------------------|
+| **<100 files/min** | Direct S3 → Lambda | Current architecture sufficient |
+| **>100 files/min** | Direct S3 → Lambda | Add SQS buffer |
+| **<5 min queries** | Express Step Functions | Current architecture sufficient |
+| **>5 min queries** | Express Step Functions | Switch to Standard Step Functions |
+
 ## 🎯 Next Steps
 
 1. **Deploy Infrastructure**: Choose your environment and deploy
 2. **Ingest Sample Data**: Upload documents to test the system
 3. **Test End-to-End**: Verify the complete pipeline works
 4. **Monitor Performance**: Set up CloudWatch dashboards
-5. **Scale as Needed**: Adjust configurations based on usage
+5. **Scale as Needed**: Adjust configurations based on usage patterns
 
 ---
 

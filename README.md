@@ -94,12 +94,16 @@ aws-serverless-agentic-rag-pipeline/
 - Vector embedding generation
 - OpenSearch indexing with hybrid search setup
 
+**📝 Production Note**: For concurrent file uploads >100/min, add SQS buffer between S3 and Lambda to prevent throttling and enable retry mechanisms.
+
 ### Knowledge Retrieval Agent  
 **Purpose**: Performs sophisticated search and ranking
 - Hybrid search (BM25 + kNN) with RRF fusion
 - Cross-encoder reranking via SageMaker
 - MMR diversity filtering
 - Quality metrics calculation
+
+**📝 Production Note**: For complex queries >5 minutes, switch to Standard Step Functions instead of Express for extended processing time and detailed execution history.
 
 ### Conversation Agent
 **Purpose**: Manages dialogue and generates responses
@@ -162,6 +166,25 @@ aws-serverless-agentic-rag-pipeline/
 - VPC endpoints for secure communication
 - Encryption at rest and in transit
 - API Gateway throttling and authentication
+
+## 🚀 Production Scaling
+
+### High-Volume Enhancements
+
+**For Concurrent File Processing (>100 files/min):**
+```
+S3 → SQS → Lambda (with DLQ for error handling)
+```
+
+**For Complex Queries (>5 minutes):**
+```
+Standard Step Functions (instead of Express)
+```
+
+**When to Scale:**
+- Add SQS buffer for high-volume document ingestion
+- Switch to Standard Step Functions for complex processing
+- Consider batch processing for enterprise document sets
 
 ## 📚 Documentation
 
