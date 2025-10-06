@@ -59,12 +59,11 @@ if [ "$ACTION" = "apply" ]; then
     echo -e "${YELLOW}🔧 Creating OpenSearch Lambda layer...${NC}"
     ./infrastructure/scripts/create_opensearch_layer.sh "$ENVIRONMENT" "$REGION"
     
-    # Deploy Step Functions before Lambda functions
+    # Deploy Step Functions
     echo -e "${YELLOW}🎭 Deploying Step Functions...${NC}"
     ./infrastructure/scripts/deploy_step_functions.sh "$ENVIRONMENT" "$REGION"
     
-    echo -e "${YELLOW}🤖 Deploying Lambda functions...${NC}"
-    ./infrastructure/scripts/deploy_lambdas_terraform.sh "$ENVIRONMENT" "$REGION"
+    # Lambda functions are already deployed by Terraform above
     
     # Configure S3 event notifications
     echo -e "${YELLOW}📬 Configuring S3 event notifications...${NC}"

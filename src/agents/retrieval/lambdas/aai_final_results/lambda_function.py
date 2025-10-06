@@ -5,9 +5,10 @@ import boto3
 import json
 import time
 from datetime import datetime
+import os
 
 s3 = boto3.client('s3')
-BUCKET_NAME = 'support-agent-search-results'
+BUCKET_NAME = os.environ.get("SEARCH_RESULTS_BUCKET", "support-agent-search-results-dev")
 
 def load_candidates_s3(s3_key):
     response = s3.get_object(Bucket=BUCKET_NAME, Key=s3_key)

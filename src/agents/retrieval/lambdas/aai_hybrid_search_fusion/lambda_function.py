@@ -11,7 +11,7 @@ from collections import defaultdict
 import os
 
 s3 = boto3.client('s3')
-BUCKET_NAME = 'support-agent-search-results'
+BUCKET_NAME = os.environ.get("SEARCH_RESULTS_BUCKET", "support-agent-search-results-dev")
 
 def store_candidates_s3(candidates, query_id, stage):
     key = f"candidates/{query_id}/{stage}.json"

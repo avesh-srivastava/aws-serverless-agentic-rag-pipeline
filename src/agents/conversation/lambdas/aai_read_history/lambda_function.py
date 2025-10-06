@@ -5,7 +5,7 @@
 import os, json, time, boto3
 from boto3.dynamodb.conditions import Key
 
-TABLE = os.environ.get("DDB_TABLE","AaiConversationHistory")
+TABLE = os.environ.get("CONVERSATION_TABLE","AaiConversationHistory")
 MAX_TURNS = int(os.environ.get("MAX_TURNS","5"))  # total items to return (user+assistant pairs)
 
 ddb = boto3.resource("dynamodb")

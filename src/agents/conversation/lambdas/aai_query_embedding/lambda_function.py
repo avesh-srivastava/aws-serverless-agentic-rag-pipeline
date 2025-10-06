@@ -5,7 +5,7 @@
 import os, json, boto3
 bedrock = boto3.client("bedrock-runtime")  # ensure region and permissions
 
-EMBED_MODEL = os.environ.get("EMBED_MODEL", "amazon.titan-embed-text-v1")
+EMBED_MODEL = os.environ.get("EMBED_MODEL", "amazon.titan-embed-text-v2:0")
 
 def lambda_handler(event, context):
     user_query = event.get("user_query", "")

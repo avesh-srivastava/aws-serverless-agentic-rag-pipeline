@@ -62,7 +62,7 @@ variable "llm_model" {
 variable "embed_model" {
   description = "Bedrock embedding model ID"
   type        = string
-  default     = "amazon.titan-embed-text-v1"
+  default     = "amazon.titan-embed-text-v2:0"
 }
 
 variable "opensearch_instance_type" {

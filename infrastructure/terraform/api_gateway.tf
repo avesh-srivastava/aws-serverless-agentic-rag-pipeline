@@ -94,14 +94,14 @@ resource "aws_api_gateway_integration" "getanswers_lambda" {
 
   integration_http_method = "POST"
   type                   = "AWS_PROXY"
-  uri                    = "arn:aws:apigateway:${data.aws_region.current.name}:lambda:path/2015-03-31/functions/arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:aai_trigger_step_function_retrieval/invocations"
+  uri                    = aws_lambda_function.agentic_rag_functions["aai_trigger_step_function_retrieval"].invoke_arn
 }
 
 # Lambda Permission for API Gateway
 resource "aws_lambda_permission" "api_gateway_invoke_retrieval" {
   statement_id  = "AllowExecutionFromAPIGateway"
   action        = "lambda:InvokeFunction"
-  function_name = "aai_trigger_step_function_retrieval"
+  function_name = aws_lambda_function.agentic_rag_functions["aai_trigger_step_function_retrieval"].function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.agentic_rag_api.execution_arn}/*/*"
 }

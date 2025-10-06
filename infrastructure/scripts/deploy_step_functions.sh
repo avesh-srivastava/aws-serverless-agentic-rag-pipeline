@@ -35,7 +35,8 @@ echo -e "${BLUE}📋 Using Step Functions Role: $STEP_FUNCTIONS_ROLE_ARN${NC}"
 deploy_step_function() {
     local state_machine_name=$1
     local definition_file=$2
-    local description=$3
+    local type=$3
+    local description=$4
     
     echo -e "${YELLOW}🚀 Deploying Step Function: $state_machine_name...${NC}"
     
@@ -53,7 +54,7 @@ deploy_step_function() {
             --name "$state_machine_name" \
             --definition "file://$definition_file" \
             --role-arn "$STEP_FUNCTIONS_ROLE_ARN" \
-            --type "STANDARD" \
+            --type "$type" \
             --region "$REGION" > /dev/null
     fi
     
@@ -67,12 +68,14 @@ echo -e "${YELLOW}🎭 Deploying Step Functions...${NC}"
 deploy_step_function \
     "AaiKnowledgeIngestionPipeline-$ENVIRONMENT" \
     "src/agents/orchestration/step-functions/AaiKnowledgeIngestionPipeline.json" \
+    "STANDARD" \
     "Agentic AI Knowledge Ingestion Pipeline"
 
 # Deploy Knowledge Retrieval RAG Pipeline  
 deploy_step_function \
     "AaiKnowledgeRetrievalRagPipeline-$ENVIRONMENT" \
     "src/agents/orchestration/step-functions/AaiKnowledgeRetrievalRagPipeline.json" \
+    "EXPRESS" \
     "Agentic AI Knowledge Retrieval RAG Pipeline"
 
 # Save Step Function ARNs for Lambda deployment

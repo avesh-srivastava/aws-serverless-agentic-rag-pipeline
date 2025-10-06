@@ -4,7 +4,7 @@
 import os, json, time, boto3, ast
 from decimal import Decimal
 
-TABLE = os.environ.get("DDB_TABLE","AaiConversationHistory")
+TABLE = os.environ.get("CONVERSATION_TABLE","AaiConversationHistory")
 ddb = boto3.resource("dynamodb")
 table = ddb.Table(TABLE)
 

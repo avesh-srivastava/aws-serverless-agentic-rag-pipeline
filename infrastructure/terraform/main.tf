@@ -222,8 +222,8 @@ resource "aws_iam_role_policy" "lambda_permissions" {
         Resource = [
           "${aws_s3_bucket.search_results.arn}/*",
           aws_s3_bucket.search_results.arn,
-          "arn:aws:s3:::support-agent-data-${var.environment}/*",
-          "arn:aws:s3:::support-agent-data-${var.environment}"
+          "${aws_s3_bucket.raw_data.arn}/*",
+          aws_s3_bucket.raw_data.arn
         ]
       },
       {

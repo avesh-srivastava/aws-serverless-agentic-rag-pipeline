@@ -16,6 +16,11 @@ output "sagemaker_role_arn" {
   value       = aws_iam_role.sagemaker_role.arn
 }
 
+output "sagemaker_endpoint_name" {
+  description = "Name of the SageMaker cross-encoder endpoint"
+  value       = aws_sagemaker_endpoint.cross_encoder.name
+}
+
 output "opensearch_domain_endpoint" {
   description = "OpenSearch domain endpoint"
   value       = aws_opensearch_domain.agentic_rag.endpoint
@@ -54,6 +59,20 @@ output "api_gateway_url" {
 output "api_gateway_getanswers_url" {
   description = "API Gateway getanswers endpoint URL"
   value       = "https://${aws_api_gateway_rest_api.agentic_rag_api.id}.execute-api.${data.aws_region.current.name}.amazonaws.com/${aws_api_gateway_stage.agentic_rag_stage.stage_name}/getanswers"
+}
+
+output "lambda_function_arns" {
+  description = "ARNs of all Lambda functions"
+  value = {
+    for name, func in aws_lambda_function.agentic_rag_functions : name => func.arn
+  }
+}
+
+output "lambda_function_names" {
+  description = "Names of all Lambda functions"
+  value = {
+    for name, func in aws_lambda_function.agentic_rag_functions : name => func.function_name
+  }
 }
 
 output "environment_config" {

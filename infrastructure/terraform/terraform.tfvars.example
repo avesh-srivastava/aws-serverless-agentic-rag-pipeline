@@ -37,7 +37,7 @@ common_tags = {
 hf_model_id = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 hf_task     = "text-classification"
 llm_model   = "amazon.titan-text-lite-v1"
-embed_model = "amazon.titan-embed-text-v1"
+embed_model = "amazon.titan-embed-text-v2:0"
 
 # Agent-Specific Configuration
 agent_configs = {
